@@ -22,6 +22,7 @@
         "save_dir": "saved/",
         "save_freq": 1,
         "verbosity": 2,
+        "visualize":true,
         "monitor": "val_loss",
         "monitor_mode": "min"
     },

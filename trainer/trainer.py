@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 from base import BaseTrainer
+from visdom import Visdom
 
 
 class Trainer(BaseTrainer):
@@ -21,6 +22,9 @@ class Trainer(BaseTrainer):
         self.valid_data_loader = valid_data_loader
         self.valid = True if self.valid_data_loader is not None else False
         self.log_step = int(np.sqrt(self.batch_size))
+        self.viz = Visdom()
+        self.plt_train_loss = None
+        self.plt_val_loss = None
 
     def _to_variable(self, data, target):
         data, target = torch.FloatTensor(data), torch.LongTensor(target)
@@ -79,6 +83,19 @@ class Trainer(BaseTrainer):
                     len(self.data_loader) * self.data_loader.batch_size,
                     100.0 * batch_idx / len(self.data_loader), 
                     loss.data[0]))
+            
+            if self.visualize:
+                if self.plt_train_loss is None:
+                    self.plt_train_loss = self.viz.line(Y=np.array([loss.data[0]]),
+                                                        opts=dict(legend=['Training Loss']))
+                else:
+                    self.viz.line(
+                            X=np.array([batch_idx+(epoch-1)*len(self.data_loader)]),
+                            Y = np.array([loss.data[0]]),
+                            win = self.plt_train_loss,
+                            update = 'append',
+                            opts=dict(legend=['Training Loss'])
+                        )
 
         log = {
             'loss': total_loss / len(self.data_loader), 
@@ -86,12 +103,12 @@ class Trainer(BaseTrainer):
         }
 
         if self.valid:
-            val_log = self._valid_epoch()
+            val_log = self._valid_epoch(epoch)
             log = {**log, **val_log}
 
         return log
 
-    def _valid_epoch(self):
+    def _valid_epoch(self,epoch):
         """
         Validate after training an epoch
 
@@ -111,6 +128,19 @@ class Trainer(BaseTrainer):
 
             total_val_loss += loss.data[0]
             total_val_metrics += self._eval_metrics(output, target)
+        
+        if self.visualize:
+                if self.plt_val_loss is None:
+                    self.plt_val_loss = self.viz.line(Y=np.array([total_val_loss / len(self.valid_data_loader)]),
+                                                        opts=dict(legend=['Validation Loss']))
+                else:
+                    self.viz.line(
+                            X=np.array([epoch-1]),
+                            Y=np.array([total_val_loss / len(self.valid_data_loader)]),
+                            win=self.plt_val_loss,
+                            update='append',
+                            opts=dict(legend=['Validation Loss'])
+                        )
 
         return {
             'val_loss': total_val_loss / len(self.valid_data_loader), 

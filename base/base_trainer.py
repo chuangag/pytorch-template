@@ -21,6 +21,7 @@ class BaseTrainer:
         self.epochs = config['trainer']['epochs']
         self.save_freq = config['trainer']['save_freq']
         self.verbosity = config['trainer']['verbosity']
+        self.visualize = config['trainer']['visualize']
         self.with_cuda = config['cuda'] and torch.cuda.is_available()
         if config['cuda'] and not torch.cuda.is_available():
             self.logger.warning('Warning: There\'s no CUDA support on this machine, '

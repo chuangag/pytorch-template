@@ -19,7 +19,7 @@ def main(config, resume):
     data_loader = MnistDataLoader(config)
     valid_data_loader = data_loader.split_validation()
 
-    model = eval(config['arch'])(config['model'])
+    model = eval(config['arch'])(config['model']) # eval("ClassName") is equivalent to the class
     model.summary()
 
     loss = eval(config['loss'])
